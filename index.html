@@ -3,308 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Analisis JTM & Roster EMIS - MIN 11 Aceh Barat</title>
-    <!-- Tailwind CSS for modern aesthetics -->
+    <title>Analisis JTM & Roster EMIS - MIN 11 Aceh Barat</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for beautiful visual report -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .chart-container { position: relative; width: 100%; max-width: 600px; margin: auto; height: 300px; }
-        .nav-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
-        .matrix-container { overflow-x: auto; scrollbar-width: thin; }
-        .matrix-input { width: 50px; text-align: center; font-size: 0.75rem; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px; transition: all 0.2s; }
-        .matrix-input:focus { border-color: #6366f1; outline: none; background-color: #eef2ff; }
-        .sticky-col { position: sticky; left: 0; background-color: #f1f5f9; z-index: 10; font-weight: 600; min-width: 160px; padding-left: 1rem; border-right: 2px solid #cbd5e1; }
-        .matrix-header { background-color: #1e293b; color: white; font-size: 0.7rem; text-align: center; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .sticky-col { position: sticky; left: 0; background-color: #f9fafb; z-index: 10; }
+        .sticky-header { position: sticky; top: 0; z-index: 20; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
 
-    <!-- Navigation & Setup Warnings -->
-    <div id="sandbox-warning" class="hidden bg-amber-500 text-white px-4 py-2 text-center text-xs font-bold transition-all">
-        ⚠️ Aplikasi dijalankan di dalam pembatasan keamanan Google Sites (Sandbox). Silakan gunakan metode "Sematkan berdasarkan URL" menggunakan link GitHub Pages Anda agar fitur online berfungsi lancar.
+    <!-- Notifikasi Deteksi Google Sites / Sandbox -->
+    <div id="sandbox-alert" class="hidden bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-3 text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exertion text-amber-500 text-lg"></i>
+            <span><strong>Perhatian:</strong> Aplikasi terdeteksi berjalan di dalam Sandbox Google Sites (Sematkan Kode). Fitur sinkronisasi otomatis antar-perangkat mungkin terbatas. Direkomendasikan menggunakan metode <strong>"Sematkan URL"</strong> menggunakan tautan GitHub Pages Anda.</span>
+        </div>
     </div>
 
-    <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between h-auto md:h-16 items-center py-3 md:py-0 gap-3 md:gap-0">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white font-extrabold shadow-md">M</div>
-                <div class="flex flex-col">
-                    <span class="text-md font-extrabold tracking-tight text-slate-900">JTM-ANALYST <span class="text-indigo-600">MIN 11 ACEH BARAT</span></span>
-                    <span class="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Multiplayer Cloud Sync Mode</span>
+    <!-- Header / Navigasi -->
+    <header class="bg-gradient-to-r from-emerald-700 to-teal-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-2 rounded-lg">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-emerald-200"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">MIN 11 Aceh Barat</h1>
+                    <p class="text-xs text-emerald-100">Sistem Analisis Kelayakan JTM & Pembuat Roster Jurnal EMIS GTK</p>
                 </div>
             </div>
             
-            <!-- Real-time Synchronization Badge & ID -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <div id="sync-indicator" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
-                    <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span id="sync-status-text">Menghubungkan Database...</span>
+            <!-- Indikator Status Database -->
+            <div class="flex items-center gap-3">
+                <div id="db-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" id="status-dot"></span>
+                    <span id="status-text">Menghubungkan...</span>
                 </div>
-                <div id="user-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[9px] font-mono">
-                    UID: <span id="active-uid" class="font-bold">...</span>
+                <div class="text-xs bg-black/20 px-2.5 py-1.5 rounded text-teal-100 border border-white/5">
+                    User UID: <span id="user-uid" class="font-mono font-bold">Local-Mode</span>
                 </div>
-            </div>
-
-            <div class="flex gap-4 md:gap-6">
-                <button onclick="showSection('dash')" id="btn-dash" class="nav-active py-2 md:py-5 px-1 text-xs md:text-sm transition-all">Beranda</button>
-                <button onclick="showSection('calc')" id="btn-calc" class="py-2 md:py-5 px-1 text-xs md:text-sm transition-all">Analisis JTM</button>
-                <button onclick="showSection('list')" id="btn-list" class="py-2 md:py-5 px-1 text-xs md:text-sm transition-all">Database & Roster</button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
-
-        <!-- SECTION: DASHBOARD -->
-        <section id="sec-dash" class="space-y-6 fade-in">
-            <div class="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
-                <div class="relative z-10">
-                    <span class="bg-indigo-500/30 text-indigo-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-indigo-400/20">Sistem Penjadwalan Integratif & Multi-Pengguna</span>
-                    <h1 class="text-3xl font-black mt-3">Verifikasi Kelayakan Kerja Guru</h1>
-                    <p class="opacity-80 mt-2 max-w-2xl text-sm">Validasi beban kerja minimal 24 JTM tatap muka di MIN 11 Aceh Barat. Perubahan data di HP atau laptop mana pun akan langsung diperbarui seketika.</p>
-                </div>
-                <div class="absolute right-0 bottom-0 top-0 w-1/3 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-400 to-transparent pointer-events-none"></div>
+    <!-- Konten Utama -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Sisi Kiri: Form Input & Matriks Distribusi (8 Kolom) -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Menu Tab Internal -->
+            <div class="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200/60">
+                <button onclick="switchTab('input-section')" id="btn-tab-input" class="flex-1 py-2.5 text-sm font-medium rounded-lg text-emerald-700 bg-emerald-50 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Kalkulator & Matriks JTM
+                </button>
+                <button onclick="switchTab('database-section')" id="btn-tab-database" class="flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-database"></i> Database Guru Terdaftar (<span id="db-count">0</span>)
+                </button>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center transition-all hover:shadow-md">
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Guru Terdaftar</p>
-                    <h3 id="stat-count" class="text-4xl font-black mt-2 text-slate-900">0</h3>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm text-center transition-all hover:shadow-md">
-                    <p class="text-emerald-600 text-xs font-bold uppercase tracking-widest">Memenuhi Syarat (LAYAK)</p>
-                    <h3 id="stat-layak" class="text-4xl font-black text-emerald-600 mt-2">0</h3>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-rose-100 shadow-sm text-center transition-all hover:shadow-md">
-                    <p class="text-rose-600 text-xs font-bold uppercase tracking-widest">Belum Memenuhi (TIDAK LAYAK)</p>
-                    <h3 id="stat-tidak" class="text-4xl font-black text-rose-600 mt-2">0</h3>
-                </div>
-            </div>
-
-            <!-- Visualization Panel -->
-            <div class="bg-white p-8 rounded-2xl border border-slate-150 shadow-sm">
-                <h4 class="font-extrabold text-center text-slate-800 text-sm uppercase tracking-wider mb-6">Persentase Pemenuhan JTM Guru</h4>
-                <div class="chart-container">
-                    <canvas id="mainChart"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION: CALCULATOR -->
-        <section id="sec-calc" class="hidden space-y-6 fade-in">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div class="flex justify-between items-center border-b pb-4 mb-4">
-                    <h2 id="calc-title" class="text-xl font-bold text-slate-900">Input Distribusi JTM Guru</h2>
-                    <span id="edit-badge" class="hidden bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-bold animate-pulse">Mode Edit Aktif</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Nama Lengkap Guru</label>
-                        <input type="text" id="inp-name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all text-sm" placeholder="Contoh: Budi Santoso, S.Pd.">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Tugas Tambahan (Ekuivalensi JTM)</label>
-                        <select id="inp-task" onchange="calculateNow()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
-                            <option value="0">Tidak Ada Tugas Tambahan (0 JTM)</option>
-                            <option value="24">Kepala Madrasah (24 JTM)</option>
-                            <option value="12">Waka Kurikulum (12 JTM)</option>
-                            <option value="12">Waka Kesiswaan (12 JTM)</option>
-                            <option value="12">Waka Sarpras (12 JTM)</option>
-                            <option value="12">Waka Humas (12 JTM)</option>
-                            <option value="12">Kepala Perpustakaan (12 JTM)</option>
-                            <option value="6">Wali Kelas (6 JTM)</option>
-                        </select>
+            <!-- TAB 1: FORM INPUT & MATRIKS JTM -->
+            <div id="tab-input-section" class="space-y-6 block">
+                <!-- Identitas & Tugas Tambahan -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <i class="fa-solid fa-user-tie text-emerald-600"></i> Profil & Komponen Tugas Tambahan Guru
+                    </h2>
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Lengkap Guru *</label>
+                            <input type="text" id="guru-nama" placeholder="Masukkan nama beserta gelar..." class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tugas Tambahan Struktural (Ekuivalensi JTM)</label>
+                            <select id="guru-tugas" onchange="hitungOtomatis()" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 text-sm bg-white">
+                                <option value="0">Tidak Ada Tugas Tambahan (0 JTM)</option>
+                                <option value="24">Kepala Madrasah (24 JTM)</option>
+                                <option value="12">Waka Kurikulum (12 JTM)</option>
+                                <option value="12">Waka Kesiswaan (12 JTM)</option>
+                                <option value="12">Waka Sarpras (12 JTM)</option>
+                                <option value="12">Waka Humas (12 JTM)</option>
+                                <option value="12">Kepala Perpustakaan (12 JTM)</option>
+                                <option value="6">Wali Kelas (6 JTM)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                <div class="p-4 bg-slate-50 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <div>
-                        <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-tight">Distribusi Jam Mengajar (Kelas 1-6 Paralel A-D)</h3>
-                        <p class="text-[11px] text-slate-500">Masukkan jumlah JTM pada sel mata pelajaran dan kelas yang diampu.</p>
+                <!-- Matriks 15 Mapel x 24 Rombel -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-table text-emerald-600"></i> Distribusi Jam Mengajar (Matriks Kelas 1-6 Paralel A-D)
+                        </h2>
+                        <button onclick="bersihkanFormMatriks()" class="text-xs text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition-all font-medium">
+                            <i class="fa-solid fa-trash-can"></i> Kosongkan Isian Matriks
+                        </button>
                     </div>
-                    <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full font-semibold">Geser horizontal untuk melihat rombel lengkap</span>
-                </div>
-                
-                <div class="matrix-container">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="sticky-col py-3 text-xs bg-slate-100 border-b border-slate-200">Mata Pelajaran</th>
-                                <script>
-                                    const classList = [];
-                                    for(let i=1; i<=6; i++) {
-                                        ['A','B','C','D'].forEach(p => {
-                                            classList.push(`${i}${p}`);
-                                            document.write(`<th class="matrix-header p-2 border border-slate-700 min-w-[55px] text-[10px] font-bold">${i}${p}</th>`);
+
+                    <!-- Area Geser Tabel Matriks -->
+                    <div class="overflow-x-auto max-w-full">
+                        <table class="w-full border-collapse text-left text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold">
+                                    <th class="p-3 sticky-col min-w-[160px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] bg-slate-100">Mata Pelajaran</th>
+                                    <!-- Looping Header Rombel 1A-6D -->
+                                    <script>
+                                        const kelases = [1,2,3,4,5,6];
+                                        const parallels = ['A','B','C','D'];
+                                        let rombelList = [];
+                                        kelases.forEach(k => {
+                                            parallels.forEach(p => {
+                                                rombelList.push(`${k}${p}`);
+                                                document.write(`<th class="p-2 border-l border-slate-200 text-center min-w-[50px] font-mono bg-slate-50">${k}${p}</th>`);
+                                            });
                                         });
-                                    }
+                                    </script>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="matrix-body">
+                                <script>
+                                    const mapels = [
+                                        "Qur'an Hadits", "Aqidah Akhlak", "Fiqih", "SKI", "B. Arab", 
+                                        "Pend.Pancasila", "B.Indonesia", "Matematika", "IPAS", "SBdP", 
+                                        "PJOK", "B.Inggris", "Tahfidh", "Qaidah Fiqhiyah", "Kokurikuler"
+                                    ];
+                                    mapels.forEach((mapel, mIdx) => {
+                                        document.write(`<tr class="hover:bg-slate-50/80 transition-colors">`);
+                                        document.write(`<td class="p-3 font-semibold text-slate-700 sticky-col shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r border-slate-100 font-medium">${mapel}</td>`);
+                                        rombelList.forEach(rombel => {
+                                            const inputId = `m_${mIdx}_${rombel}`;
+                                            document.write(`
+                                                <td class="p-1 border-l border-slate-100 text-center">
+                                                    <input type="number" id="${inputId}" min="0" max="12" placeholder="0" oninput="hitungOtomatis()"
+                                                        class="w-full bg-transparent text-center py-1 font-mono text-sm focus:outline-none focus:bg-emerald-50 rounded text-slate-800 font-medium placeholder-slate-300">
+                                                </td>
+                                            `);
+                                        });
+                                        document.write(`</tr>`);
+                                    });
                                 </script>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: DATABASE GURU -->
+            <div id="tab-database-section" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4 hidden">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open text-emerald-600"></i> Rekapitulasi Data Kelayakan Guru
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Seluruh data tersinkronisasi otomatis dengan penyimpanan awan terdistribusi.</p>
+                    </div>
+                    <button onclick="bersihkanSeluruhDatabase()" class="text-xs text-red-600 font-semibold border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-all">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Kosongkan Database Cloud
+                    </button>
+                </div>
+
+                <!-- Kontainer Tabel Data -->
+                <div class="overflow-x-auto border border-slate-100 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                                <th class="p-3">Nama Guru</th>
+                                <th class="p-3">Tugas Tambahan</th>
+                                <th class="p-3 text-center">Total JTM</th>
+                                <th class="p-3 text-center">Status Kelayakan</th>
+                                <th class="p-3 text-center">Aksi Operasional</th>
                             </tr>
                         </thead>
-                        <tbody id="matrix-body">
-                            <!-- JS generates 15 rows for specific subjects -->
+                        <tbody id="db-table-body" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-spinner animate-spin text-lg mb-2 text-emerald-600"></i>
+                                    <p>Memuat database berkas...</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Floating / Sticky Result Bar -->
-            <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-40">
-                <div id="res-bar" class="bg-slate-900/95 backdrop-blur text-white p-5 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-700">
-                    <div class="flex gap-8">
-                        <div>
-                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Akumulasi Beban Kerja</p>
-                            <div class="flex items-baseline gap-1">
-                                <span id="total-jtm" class="text-4xl font-black">0</span>
-                                <span class="text-slate-400 font-bold">/ 24 JTM</span>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Status Kelayakan</p>
-                            <div id="status-tag" class="mt-1 px-3 py-1 rounded-lg text-xs font-extrabold tracking-tighter">MENUNGGU DATA</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 w-full md:w-auto justify-end">
-                        <button onclick="resetCalculator()" class="px-5 py-2.5 border border-slate-700 rounded-xl font-bold text-xs hover:bg-slate-800 transition-all text-slate-300">Reset</button>
-                        <button onclick="saveData()" id="btn-save-action" class="px-7 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-500 shadow-lg shadow-indigo-950/40 transition-all">Simpan Database</button>
-                    </div>
-                </div>
-            </div>
-            <div class="h-32"></div> <!-- Space for bottom sticky bar -->
-        </section>
+        </div>
 
-        <!-- SECTION: DATA LIST & ROSTER -->
-        <section id="sec-list" class="hidden space-y-8 fade-in">
-            <div class="space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-xl font-extrabold text-slate-900">Database Verifikasi JTM Guru</h2>
-                        <p class="text-xs text-slate-500">Daftar guru tersinkronisasi di Awan MIN 11 Aceh Barat.</p>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="confirmClearAll()" class="px-4 py-2 border border-rose-200 text-rose-600 rounded-xl font-bold text-xs hover:bg-rose-50 transition-all">Kosongkan Database</button>
-                        <button onclick="generateRosterAndDownload()" class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs hover:bg-emerald-500 shadow-md shadow-emerald-900/10 flex items-center gap-2 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Download Roster EMIS (Google Sheets)
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold border-b border-slate-100">
-                                <tr>
-                                    <th class="p-4">Nama Guru</th>
-                                    <th class="p-4">Tugas Tambahan</th>
-                                    <th class="p-4 text-center">Total JTM</th>
-                                    <th class="p-4 text-center">Status Kelayakan</th>
-                                    <th class="p-4 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="db-body" class="divide-y divide-slate-150">
-                                <tr><td colspan="5" class="p-10 text-center text-slate-400 italic text-sm">Sedang memuat data dari awan...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Roster Live Preview -->
-            <div class="space-y-4 pt-4 border-t border-slate-200">
+        <!-- Sisi Kanan: Panel Hasil Real-Time & Roster Preview (4 Kolom) -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Panel Kelayakan Instan -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 flex flex-col justify-between space-y-4 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-2 h-full bg-slate-300" id="status-side-bar"></div>
+                
                 <div>
-                    <h3 class="text-lg font-extrabold text-slate-900">Pratinjau Jadwal Roster (Anti-Bentrok)</h3>
-                    <p class="text-xs text-slate-500">Pratinjau otomatis hasil penyusunan jadwal bebas bentrok berdasarkan analisis JTM di atas.</p>
+                    <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Kalkulator Ringkasan Beban Kerja</span>
+                    <h3 class="text-sm font-bold text-slate-800 mt-0.5" id="display-guru-nama">Pilih / Masukkan Nama Guru</h3>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl">
-                        <div class="flex gap-2 items-center">
-                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                            <span class="text-xs font-bold text-slate-700">Skema Jam Pelajaran: 35 Menit / JTM</span>
-                        </div>
-                        <div class="text-[11px] text-slate-500 font-semibold text-indigo-700">Mulai jam 07:55, Istirahat: 10:15 - 10:50.</div>
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div>
+                        <span class="text-[10px] text-slate-500 block">Jam Tatap Muka</span>
+                        <div class="text-2xl font-black text-slate-800 font-mono" id="calc-total-jtm">0 <span class="text-xs font-normal text-slate-500">JTM</span></div>
                     </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block">Status Regulasi</span>
+                        <div id="calc-status-badge" class="mt-1 text-center font-bold text-[10px] px-2 py-1 rounded bg-slate-200 text-slate-600 tracking-wide uppercase">BELUM ADA DATA</div>
+                    </div>
+                </div>
 
-                    <!-- Filter Class -->
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Lihat Roster Kelas:</label>
-                        <select id="filter-roster-class" onchange="renderRosterPreview()" class="p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
-                            <!-- Will be filled with ClassList -->
-                        </select>
-                    </div>
-
-                    <div class="overflow-x-auto border border-slate-150 rounded-xl">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead class="bg-slate-900 text-white font-bold text-center">
-                                <tr>
-                                    <th class="p-3 border border-slate-800">Jam Ke</th>
-                                    <th class="p-3 border border-slate-800">Waktu</th>
-                                    <th class="p-3 border border-slate-800">Senin</th>
-                                    <th class="p-3 border border-slate-800">Selasa</th>
-                                    <th class="p-3 border border-slate-800">Rabu</th>
-                                    <th class="p-3 border border-slate-800">Kamis</th>
-                                    <th class="p-3 border border-slate-800">Jumat</th>
-                                    <th class="p-3 border border-slate-800">Sabtu</th>
-                                </tr>
-                            </thead>
-                            <tbody id="roster-preview-body" class="text-center font-medium divide-y divide-slate-200">
-                                <!-- Interactive Roster generated here -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="space-y-2 pt-1">
+                    <button onclick="simpanKeDatabaseCloud()" id="btn-save-main" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl shadow-sm transition-all text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Data & Kunci Form
+                    </button>
+                    <button onclick="batalEdit()" id="btn-cancel-edit" class="w-full hidden bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl transition-all text-xs items-center justify-center gap-2">
+                        Batal Modifikasi Data
+                    </button>
                 </div>
             </div>
-        </section>
 
+            <!-- Panel Roster EMIS Generator -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-week text-emerald-600"></i> Roster Otomatis EMIS GTK
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Jadwal disusun otomatis berbasis algoritma *Greedy-Clash Prevention* (Anti Bentrok).</p>
+                </div>
+
+                <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-[11px] text-emerald-800 space-y-1 font-medium">
+                    <div class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-emerald-600"></i> <span>Hari Kerja: Senin s/d Sabtu</span></div>
+                    <div class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-emerald-600"></i> <span>Durasi: 35 Menit / JTM (Mulai 07:55)</span></div>
+                    <div class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-emerald-600"></i> <span>Istirahat: Pukul 10:15 - 10:50 (Dikunci)</span></div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="unduhRosterGoogleSheet()" class="w-full bg-slate-900 hover:bg-slate-800 text-emerald-400 font-bold py-3 rounded-xl transition-all text-xs flex items-center justify-center gap-2 shadow-sm border border-emerald-500/20">
+                        <i class="fa-solid fa-file-excel text-emerald-500 text-sm"></i> Unduh Jadwal Kompatibel Google Sheet
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </main>
 
-    <!-- CUSTOM ALERT / MODAL SYSTEM (No Native Alert/Confirm used) -->
-    <div id="modal-container" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[100] flex items-center justify-center hidden fade-in">
-        <div class="bg-white max-w-md w-full p-6 rounded-2xl shadow-2xl m-4 border border-slate-200 transform scale-100 transition-all">
-            <h3 id="modal-title" class="text-lg font-black text-slate-900">Judul Pesan</h3>
-            <p id="modal-desc" class="text-sm text-slate-600 mt-2">Isi atau deskripsi pesan yang ingin disampaikan akan muncul di sini.</p>
-            <div id="modal-actions" class="mt-6 flex justify-end gap-3">
-                <button id="modal-btn-cancel" class="px-4 py-2 border rounded-xl text-xs font-bold hover:bg-slate-50 transition-all text-slate-600 hidden">Batal</button>
-                <button id="modal-btn-ok" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500 transition-all shadow-md shadow-indigo-900/10">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOAST ALERT FEEDBACK -->
-    <div id="toast-box" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl z-[110] flex items-center gap-3 border border-slate-700 text-xs font-bold hidden transition-all">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-        <span id="toast-text">Pemberitahuan berhasil!</span>
-    </div>
-
-    <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-20">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>&copy; 2026 MIN 11 Aceh Barat. Hak Cipta Dilindungi.</p>
-            <p class="flex items-center gap-1.5 justify-center bg-slate-900 px-3.5 py-2 rounded-full border border-slate-800 text-[11px]">
-                <span>AI Website Creator:</span>
-                <span class="font-extrabold text-indigo-400 flex items-center gap-0.5">Amirah Mastura ⭐</span>
+    <!-- Footer Atribusi Kreator -->
+    <footer class="bg-slate-950 text-slate-400 py-4 mt-12 text-center text-xs border-t border-slate-900">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>&copy; 2026 MIN 11 Aceh Barat. Hak Cipta Dilindungi Regulasi Pendidikan.</p>
+            <p class="flex items-center gap-1 text-slate-300">
+                <span>Dikembangkan secara cerdas oleh</span>
+                <span class="font-bold text-emerald-400 tracking-wide flex items-center gap-0.5">Amirah Mastura <i class="fa-solid fa-star text-[10px] text-amber-400"></i></span>
+                <span class="text-slate-500 text-[10px]">(AI Website Creator)</span>
             </p>
         </div>
     </footer>
 
-    <!-- FIREBASE AND CORE APP SCRIPT MODULE -->
+    <!-- ==================== SCRIPT CONFIG & ARSITEKTUR CORE ==================== -->
+    
+    <!-- SDK Modular Firebase (Dilempar via JSDelivr CDN) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // =========================================================================
-        // PENTING: Ganti baris di bawah ini dengan menyalin "firebaseConfig" asli Anda
-        // dari Firebase Console agar sistem sinkronisasi online menyala.
-        // =========================================================================
+        // KODE UTAMA KONFIGURASI DATABASE ANDA
+        // SILAKAN GANTI KODE DI BAWAH INI DENGAN KUNCI ASLI DARI FIREBASE CONSOLE ANDA
         const firebaseConfig = {
   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",
   authDomain: "jtm-min11-acehbarat.firebaseapp.com",
@@ -313,723 +282,471 @@
   messagingSenderId: "352580004728",
   appId: "1:352580004728:web:85943d861f967c3454768d"
 };
-        const subjects = [
-            "Qur'an Hadits", "Aqidah Akhlak", "Fiqih", "SKI", "B. Arab", 
-            "Pend. Pancasila", "B. Indonesia", "Matematika", "IPAS", "SBdP", 
-            "PJOK", "B. Inggris", "Tahfidh", "Qaidah Fiqhiyah", "Kokurikuler"
-        ];
 
-        const classes = [];
-        for (let i = 1; i <= 6; i++) {
-            ['A', 'B', 'C', 'D'].forEach(p => classes.push(`${i}${p}`));
+        // Variabel global internal scope module
+        let app, db;
+        let localCacheDatabase = [];
+        let isFirebaseOnline = false;
+
+        // Fungsi pembantu mengecek kesiapan parameter konfigurasi asli
+        function cekKesiapanKonfigurasi() {
+            return firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("SALIN_");
         }
 
-        let db = []; // Local memory cache of teachers
-        let myChart = null;
-        let editingId = null; 
-        let userId = null;
-        let firestoreDb = null;
-        let currentAppId = 'min-11-jtm-app';
-
-        // Custom Dialog Box & Toast
-        function triggerToast(message) {
-            const toast = document.getElementById('toast-box');
-            const toastText = document.getElementById('toast-text');
-            toastText.innerText = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        function triggerModal(title, desc, onOk, showCancel = false, onCancel = null) {
-            const modal = document.getElementById('modal-container');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-desc').innerText = desc;
-            
-            const btnOk = document.getElementById('modal-btn-ok');
-            const btnCancel = document.getElementById('modal-btn-cancel');
-
-            if (showCancel) {
-                btnCancel.classList.remove('hidden');
-            } else {
-                btnCancel.classList.add('hidden');
+        // Inisialisasi Firebase & Penyelarasan Sandbox
+        async function initApp() {
+            // Deteksi pembatasan IFrame sandbox Google Sites
+            if (window.self !== window.top) {
+                document.getElementById('sandbox-alert').classList.remove('hidden');
+                updateStatusUI('sandbox');
             }
 
-            btnOk.onclick = () => {
-                modal.classList.add('hidden');
-                if (onOk) onOk();
-            };
-
-            btnCancel.onclick = () => {
-                modal.classList.add('hidden');
-                if (onCancel) onCancel();
-            };
-
-            modal.classList.remove('hidden');
-        }
-
-        // Initialize App & Matrix Setup
-        function initApp() {
-            // Check if running in restricted IFrame environment
-            try {
-                if (window.self !== window.top) {
-                    document.getElementById('sandbox-warning').classList.remove('hidden');
+            if (cekKesiapanKonfigurasi()) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    isFirebaseOnline = true;
+                    document.getElementById('user-uid').innerText = "Cloud-Active";
+                    updateStatusUI('online');
+                } catch (error) {
+                    console.error("Gagal inisialisasi Firebase Cloud, fallback ke luring:", error);
+                    isFirebaseOnline = false;
+                    updateStatusUI('offline');
                 }
-            } catch (e) {
-                document.getElementById('sandbox-warning').classList.remove('hidden');
-            }
-
-            const tbody = document.getElementById('matrix-body');
-            tbody.innerHTML = '';
-            
-            subjects.forEach((sub, sIdx) => {
-                let row = `<tr><td class="sticky-col py-2 text-[11px] border-b border-slate-200">${sub}</td>`;
-                classes.forEach((className, cIdx) => {
-                    row += `<td class="p-1 border-b border-slate-100 text-center">
-                                <input type="number" min="0" value="0" 
-                                       id="cell-${sIdx}-${cIdx}" 
-                                       oninput="calculateNow()" 
-                                       class="jtm-val matrix-input" 
-                                       data-subject="${sub}" 
-                                       data-class="${className}">
-                            </td>`;
-                });
-                row += `</tr>`;
-                tbody.innerHTML += row;
-            });
-
-            // Populate class filter dropdown
-            const filterDropdown = document.getElementById('filter-roster-class');
-            filterDropdown.innerHTML = '';
-            classes.forEach(cls => {
-                filterDropdown.innerHTML += `<option value="${cls}">Kelas ${cls}</option>`;
-            });
-
-            // Fallback load from localStorage in case Cloud configuration is missing
-            let localBackup = null;
-            try {
-                localBackup = localStorage.getItem('jtm_db_pro');
-            } catch (e) {
-                console.warn("Storage access restricted. Sandbox detected.");
-            }
-
-            if (localBackup) {
-                db = JSON.parse(localBackup);
-                renderDashboard();
-                renderTable();
-                renderRosterPreview();
-            }
-
-            if (!isFirebaseConfigured) {
-                updateSyncBadge("Offline (Lokal)", "bg-slate-400", false);
-                renderTable();
-                renderDashboard();
-            }
-        }
-
-        function updateSyncBadge(text, colorClass, pulse = true) {
-            const dot = document.getElementById('sync-dot');
-            const txt = document.getElementById('sync-status-text');
-            const indicator = document.getElementById('sync-indicator');
-
-            txt.innerText = text;
-            dot.className = `w-2 h-2 rounded-full ${colorClass} ${pulse ? 'animate-pulse' : ''}`;
-            
-            if (colorClass === 'bg-emerald-500') {
-                indicator.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold";
-            } else if (colorClass === 'bg-rose-500') {
-                indicator.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-bold";
             } else {
-                indicator.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold";
+                console.warn("Kunci Firebase kosong. Sistem berjalan dalam Mode Penyimpanan Lokal Cadangan.");
+                isFirebaseOnline = false;
+                updateStatusUI('offline');
+            }
+
+            // Muat data awal
+            await muatDataTerdaftar();
+            hitungOtomatis();
+        }
+
+        // Fungsi memperbarui Tampilan Status Koneksi di Navigasi
+        function updateStatusUI(status) {
+            const badge = document.getElementById('db-status-badge');
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+
+            badge.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ";
+            dot.className = "w-2 h-2 rounded-full ";
+
+            if (status === 'online') {
+                badge.classList.add("bg-emerald-500/20", "text-emerald-200", "border", "border-emerald-500/30");
+                dot.classList.add("bg-emerald-400");
+                text.innerText = "Terhubung ke Awan (Online)";
+            } else if (status === 'sandbox') {
+                badge.classList.add("bg-amber-500/20", "text-amber-200", "border", "border-amber-500/30");
+                dot.classList.add("bg-amber-400", "animate-pulse");
+                text.innerText = "Sandbox Terbatas";
+            } else {
+                badge.classList.add("bg-slate-500/20", "text-slate-300", "border", "border-slate-500/30");
+                dot.classList.add("bg-slate-400");
+                text.innerText = "Penyimpanan Lokal (Offline)";
             }
         }
 
-        // Setup real-time listeners and database authentication
-        async function setupFirebase() {
-            if (!isFirebaseConfigured) {
-                console.log("Firebase config not found or unconfigured. Running in offline fallback mode.");
+        // Fungsi Membaca / Memuat Seluruh Data Terdaftar
+        async function muatDataTerdaftar() {
+            if (isFirebaseOnline) {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "guru_jtm_min11"));
+                    localCacheDatabase = [];
+                    querySnapshot.forEach((doc) => {
+                        localCacheDatabase.push({ id: doc.id, ...doc.data() });
+                    });
+                    // Salinan cadangan ke lokal jika jaringan mati sewaktu-waktu
+                    localStorage.setItem('backup_jtm_data', JSON.stringify(localCacheDatabase));
+                } catch (e) {
+                    console.error("Gagal mengambil data Cloud, membaca backup lokal:", e);
+                    bacaDariBackupLokal();
+                }
+            } else {
+                bacaDariBackupLokal();
+            }
+            bangunTabelDatabase();
+        }
+
+        function bacaDariBackupLokal() {
+            const dataLokal = localStorage.getItem('backup_jtm_data');
+            localCacheDatabase = dataLokal ? JSON.stringify(dataLokal) : dapatkanSimulasiAwal();
+        }
+
+        // Simulasi Isian Otomatis 1 Layak & 1 Tidak Layak Sesuai Prompt
+        function dapatkanSimulasiAwal() {
+            const mockData = [
+                {
+                    id: "simulasi_01",
+                    nama: "Drs. Syarifuddin, M.Pd",
+                    tugas: "12", // Waka Kurikulum
+                    tugasNama: "Waka Kurikulum",
+                    totalJTM: 26,
+                    status: "LAYAK",
+                    matriks: { "m_6_1A": 4, "m_7_1B": 4, "m_6_2A": 3, "m_7_2B": 3 } // Mengajar B.Indo dan Matematika
+                },
+                {
+                    id: "simulasi_02",
+                    nama: "Cut Nyak Aminah, S.Pd.I",
+                    tugas: "6", // Wali Kelas
+                    tugasNama: "Wali Kelas",
+                    totalJTM: 18,
+                    status: "TIDAK LAYAK",
+                    matriks: { "m_0_3A": 2, "m_1_3B": 2, "m_2_3C": 2, "m_3_3D": 2, "m_4_4A": 4 } // Mengajar rumpun PAI (Quran Hadits, Akidah, Fiqih, SKI, B.Arab)
+                }
+            ];
+            localStorage.setItem('backup_jtm_data', JSON.stringify(mockData));
+            return mockData;
+        }
+
+        // Menyusun Tampilan Rekapitulasi Data di Tab 2
+        function bangunTabelDatabase() {
+            const tbody = document.getElementById('db-table-body');
+            document.getElementById('db-count').innerText = localCacheDatabase.length;
+
+            if (localCacheDatabase.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Belum ada data guru tersimpan dalam database.</td></tr>`;
                 return;
             }
 
-            try {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                firestoreDb = getFirestore(app);
-
-                await signInAnonymously(auth);
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('active-uid').innerText = userId;
-                        document.getElementById('user-badge').classList.remove('hidden');
-                        document.getElementById('user-badge').classList.add('flex');
-                        
-                        updateSyncBadge("Terhubung ke Awan", "bg-emerald-500", false);
-                        startRealtimeSync();
-                    } else {
-                        updateSyncBadge("Kesalahan Otentikasi", "bg-rose-500", false);
-                    }
-                });
-
-            } catch (err) {
-                console.error("Firebase Initialization Error:", err);
-                updateSyncBadge("Sandbox Terbatas (Lokal)", "bg-rose-500", false);
-            }
-        }
-
-        function startRealtimeSync() {
-            if (!firestoreDb) return;
-
-            const collectionRef = collection(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers');
-
-            onSnapshot(collectionRef, (snapshot) => {
-                const tempTeachers = [];
-                snapshot.forEach((doc) => {
-                    tempTeachers.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-
-                db = tempTeachers;
-                
-                try {
-                    localStorage.setItem('jtm_db_pro', JSON.stringify(db));
-                } catch(e) {}
-
-                renderTable();
-                renderDashboard();
-                renderRosterPreview();
-
-                updateSyncBadge("Sinkronisasi Aktif", "bg-emerald-500", true);
-            }, (error) => {
-                console.error("Realtime sync error:", error);
-                updateSyncBadge("Gagal Sinkronisasi", "bg-rose-500", false);
-            });
-        }
-
-        // Local Calculations
-        function calculateNow() {
-            const taskJtm = parseInt(document.getElementById('inp-task').value) || 0;
-            let teachingJtm = 0;
-            
-            document.querySelectorAll('.jtm-val').forEach(input => {
-                teachingJtm += parseInt(input.value) || 0;
-            });
-
-            const total = taskJtm + teachingJtm;
-            const status = total >= 24 ? "LAYAK" : "TIDAK LAYAK";
-
-            document.getElementById('total-jtm').innerText = total;
-            const tag = document.getElementById('status-tag');
-            const bar = document.getElementById('res-bar');
-            
-            tag.innerText = status;
-            if(status === "LAYAK") {
-                tag.className = "mt-1 px-3 py-1 rounded-lg bg-emerald-500 text-white text-xs font-black tracking-tighter";
-                bar.classList.add('border-emerald-500/50');
-                bar.classList.remove('border-rose-500/50');
-            } else {
-                tag.className = "mt-1 px-3 py-1 rounded-lg bg-rose-500 text-white text-xs font-black tracking-tighter";
-                bar.classList.add('border-rose-500/50');
-                bar.classList.remove('border-emerald-500/50');
-            }
-        }
-
-        // Save data to Firestore (or local if offline)
-        async function saveData() {
-            const name = document.getElementById('inp-name').value.trim();
-            if(!name) {
-                return triggerModal('Nama Kosong', 'Silakan masukkan nama guru terlebih dahulu.');
-            }
-
-            const total = parseInt(document.getElementById('total-jtm').innerText);
-            const taskVal = document.getElementById('inp-task').value;
-            const taskText = document.getElementById('inp-task').options[document.getElementById('inp-task').selectedIndex].text.split(' (')[0];
-            
-            const allocations = [];
-            document.querySelectorAll('.jtm-val').forEach(input => {
-                const hours = parseInt(input.value) || 0;
-                if (hours > 0) {
-                    allocations.push({
-                        subject: input.getAttribute('data-subject'),
-                        className: input.getAttribute('data-class'),
-                        hours: hours
-                    });
-                }
-            });
-
-            const docId = editingId ? String(editingId) : String(Date.now());
-            const payload = {
-                name: name,
-                task: taskText,
-                taskVal: taskVal,
-                total: total,
-                status: total >= 24 ? "LAYAK" : "TIDAK LAYAK",
-                allocations: allocations,
-                lastUpdatedBy: userId || 'local-user',
-                updatedAt: new Date().toISOString()
-            };
-
-            if (firestoreDb) {
-                try {
-                    updateSyncBadge("Menyimpan ke Awan...", "bg-amber-500", true);
-                    const docRef = doc(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers', docId);
-                    await setDoc(docRef, payload);
-                    triggerToast(editingId ? 'Data guru berhasil diperbarui di Awan!' : 'Data guru berhasil ditambahkan ke Awan!');
-                } catch (err) {
-                    console.error("Firestore Save Error:", err);
-                    triggerModal("Kesalahan Penyimpanan", "Gagal mengunggah data ke awan. Disimpan secara lokal sementara.");
-                }
-            } else {
-                if (editingId) {
-                    const idx = db.findIndex(item => item.id === editingId);
-                    if (idx !== -1) {
-                        db[idx] = { id: editingId, ...payload };
-                    }
-                    triggerToast('Data diperbarui secara lokal!');
-                } else {
-                    db.push({ id: docId, ...payload });
-                    triggerToast('Data ditambahkan secara lokal!');
-                }
-                try {
-                    localStorage.setItem('jtm_db_pro', JSON.stringify(db));
-                } catch (e) {}
-                renderTable();
-                renderDashboard();
-                renderRosterPreview();
-            }
-
-            editingId = null;
-            document.getElementById('calc-title').innerText = "Input Distribusi JTM Guru";
-            document.getElementById('edit-badge').classList.add('hidden');
-            document.getElementById('btn-save-action').innerText = "Simpan Database";
-
-            resetCalculator();
-            showSection('list');
-        }
-
-        function editEntry(id) {
-            const teacher = db.find(item => String(item.id) === String(id));
-            if (!teacher) return;
-
-            editingId = teacher.id;
-            document.getElementById('calc-title').innerText = "Edit Distribusi JTM Guru";
-            document.getElementById('edit-badge').classList.remove('hidden');
-            document.getElementById('btn-save-action').innerText = "Perbarui Database";
-
-            document.getElementById('inp-name').value = teacher.name;
-            document.getElementById('inp-task').value = teacher.taskVal || "0";
-
-            document.querySelectorAll('.jtm-val').forEach(input => {
-                input.value = 0;
-            });
-
-            if (teacher.allocations && Array.isArray(teacher.allocations)) {
-                teacher.allocations.forEach(alloc => {
-                    const sIdx = subjects.indexOf(alloc.subject);
-                    const cIdx = classes.indexOf(alloc.className);
-                    if (sIdx !== -1 && cIdx !== -1) {
-                        const inp = document.getElementById(`cell-${sIdx}-${cIdx}`);
-                        if (inp) inp.value = alloc.hours;
-                    }
-                });
-            }
-
-            calculateNow();
-            showSection('calc');
-            triggerToast('Data berhasil dimuat ke Kalkulator.');
-        }
-
-        async function confirmDelete(id) {
-            triggerModal(
-                'Hapus Data', 
-                'Apakah Anda yakin ingin menghapus data guru ini dari database bersama?', 
-                async () => {
-                    if (firestoreDb) {
-                        try {
-                            updateSyncBadge("Menghapus...", "bg-amber-500", true);
-                            const docRef = doc(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers', String(id));
-                            await deleteDoc(docRef);
-                            triggerToast('Data guru berhasil dihapus dari Awan!');
-                        } catch (err) {
-                            console.error("Firestore Delete Error:", err);
-                            triggerToast('Gagal menghapus data dari awan!');
-                        }
-                    } else {
-                        db = db.filter(item => String(item.id) !== String(id));
-                        try {
-                            localStorage.setItem('jtm_db_pro', JSON.stringify(db));
-                        } catch(e) {}
-                        renderTable();
-                        renderDashboard();
-                        renderRosterPreview();
-                        triggerToast('Data guru dihapus lokal.');
-                    }
-                }, 
-                true
-            );
-        }
-
-        function confirmClearAll() {
-            triggerModal(
-                'Kosongkan Seluruh Database', 
-                'Apakah Anda yakin ingin menghapus SELURUH basis data verifikasi guru? Tindakan ini akan menghapus data semua rekan kerja dari awan.', 
-                async () => {
-                    if (firestoreDb) {
-                        try {
-                            updateSyncBadge("Mengosongkan...", "bg-amber-500", true);
-                            const collectionRef = collection(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers');
-                            const snap = await getDocs(collectionRef);
-                            const deletePromises = [];
-                            snap.forEach((docItem) => {
-                                deletePromises.push(deleteDoc(doc(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers', docItem.id)));
-                            });
-                            await Promise.all(deletePromises);
-                            triggerToast('Seluruh database awan berhasil dikosongkan!');
-                        } catch (err) {
-                            console.error("Error clearing collection:", err);
-                            triggerToast("Gagal mengosongkan database awan.");
-                        }
-                    } else {
-                        db = [];
-                        try {
-                            localStorage.removeItem('jtm_db_pro');
-                        } catch (e) {}
-                        renderTable();
-                        renderDashboard();
-                        renderRosterPreview();
-                        triggerToast('Database lokal dikosongkan.');
-                    }
-                }, 
-                true
-            );
-        }
-
-        function renderTable() {
-            const container = document.getElementById('db-body');
-            container.innerHTML = db.length === 0 ? '<tr><td colspan="5" class="p-10 text-center text-slate-400 italic text-sm">Belum ada data verifikasi guru di sistem awan ini.</td></tr>' : '';
-            
-            db.forEach((item) => {
-                container.innerHTML += `
+            tbody.innerHTML = "";
+            localCacheDatabase.forEach(guru => {
+                const statusColor = guru.status === 'LAYAK' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition-all">
-                        <td class="p-4 font-bold text-slate-800 text-sm">
-                            ${item.name}
+                        <td class="p-3 font-semibold text-slate-800">${guru.nama}</td>
+                        <td class="p-3 text-slate-500">${guru.tugasNama || 'Tidak Ada'} (${guru.tugas} JTM)</td>
+                        <td class="p-3 text-center font-mono font-bold">${guru.totalJTM} JTM</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${statusColor}">${guru.status}</span>
                         </td>
-                        <td class="p-4 text-xs text-slate-500">${item.task}</td>
-                        <td class="p-4 text-center font-black">${item.total}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-2.5 py-1 rounded-full text-[9px] font-extrabold tracking-wider ${item.status === 'LAYAK' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${item.status}</span>
-                        </td>
-                        <td class="p-4 text-right flex justify-end gap-2 text-xs">
-                            <button onclick="editEntry('${item.id}')" class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 text-indigo-600 font-bold transition-all">Edit</button>
-                            <button onclick="confirmDelete('${item.id}')" class="px-3 py-1.5 border border-rose-100 text-rose-500 rounded-lg hover:bg-rose-50 hover:text-rose-700 font-bold transition-all">Hapus</button>
+                        <td class="p-3 text-center space-x-1.5">
+                            <button onclick="pemicuEditGuru('${guru.id}')" class="text-indigo-600 hover:bg-indigo-50 border border-indigo-100 px-2 py-1 rounded transition-all">
+                                <i class="fa-solid fa-user-pen"></i> Edit
+                            </button>
+                            <button onclick="hapusGuruDariCloud('${guru.id}')" class="text-rose-600 hover:bg-rose-50 border border-rose-100 px-2 py-1 rounded transition-all">
+                                <i class="fa-solid fa-trash"></i> Hapus
+                            </button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function renderDashboard() {
-            document.getElementById('stat-count').innerText = db.length;
-            const layak = db.filter(i => i.status === 'LAYAK').length;
-            const tidak = db.length - layak;
-            document.getElementById('stat-layak').innerText = layak;
-            document.getElementById('stat-tidak').innerText = tidak;
+        // Perhitungan Otomatis Matriks Isian Guru (Real-Time)
+        window.hitungOtomatis = function() {
+            const namaInput = document.getElementById('guru-nama').value;
+            const tugasSelect = document.getElementById('guru-tugas');
+            const bobotTugas = parseInt(tugasSelect.value) || 0;
 
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if(myChart) myChart.destroy();
+            document.getElementById('display-guru-nama').innerText = namaInput.trim() !== "" ? namaInput : "Pilih / Masukkan Nama Guru";
+
+            // Hitung akumulasi dari semua input cell matriks pelajaran
+            let totalMatriks = 0;
+            const inputs = document.getElementById('matrix-body').getElementsByTagName('input');
+            for (let input of inputs) {
+                const val = parseInt(input.value) || 0;
+                totalMatriks += val;
+            }
+
+            const totalAkhirJTM = totalMatriks + bobotTugas;
+            document.getElementById('calc-total-jtm').innerHTML = `${totalAkhirJTM} <span class="text-xs font-normal text-slate-500">JTM</span>`;
+
+            // Tentukan Kelayakan berdasarkan rumus aturan (Ambang Batas Minimum: 24 JTM)
+            const badge = document.getElementById('calc-status-badge');
+            const sideBar = document.getElementById('status-side-bar');
             
-            myChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Layak (Minimal 24 JTM)', 'Belum Memenuhi Syarat'],
-                    datasets: [{
-                        data: [layak, tidak],
-                        backgroundColor: ['#10b981', '#f43f5e'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: {
-                        legend: { 
-                            position: 'bottom', 
-                            labels: { 
-                                usePointStyle: true, 
-                                padding: 20, 
-                                font: { weight: 'bold', size: 11, family: 'Plus Jakarta Sans' } 
-                            } 
-                        }
-                    }
-                }
-            });
-        }
-
-        function resetCalculator() {
-            editingId = null;
-            document.getElementById('calc-title').innerText = "Input Distribusi JTM Guru";
-            document.getElementById('edit-badge').classList.add('hidden');
-            document.getElementById('btn-save-action').innerText = "Simpan Database";
-            document.getElementById('inp-name').value = '';
-            document.getElementById('inp-task').value = '0';
-            document.querySelectorAll('.jtm-val').forEach(i => i.value = 0);
-            calculateNow();
-        }
-
-        function showSection(id) {
-            ['dash', 'calc', 'list'].forEach(s => document.getElementById(`sec-${s}`).classList.add('hidden'));
-            ['dash', 'calc', 'list'].forEach(s => document.getElementById(`btn-${s}`).classList.remove('nav-active'));
-            document.getElementById(`sec-${id}`).classList.remove('hidden');
-            document.getElementById(`btn-${id}`).classList.add('nav-active');
-            if(id === 'dash') renderDashboard();
-        }
-
-        const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-
-        function getTimeSlot(day, period) {
-            if (day === 'Jumat') {
-                const slots = {
-                    1: { start: "07:55", end: "08:30" },
-                    2: { start: "08:30", end: "09:05" },
-                    3: { start: "09:35", end: "10:10" },
-                    4: { start: "10:10", end: "10:45" },
-                    5: { start: "10:45", end: "11:20" }
-                };
-                return slots[period] || { start: "--:--", end: "--:--" };
+            if (namaInput.trim() === "" && totalMatriks === 0 && bobotTugas === 0) {
+                badge.className = "mt-1 text-center font-bold text-[10px] px-2 py-1 rounded bg-slate-200 text-slate-600 tracking-wide uppercase";
+                badge.innerText = "BELUM ADA DATA";
+                sideBar.className = "absolute top-0 left-0 w-2 h-full bg-slate-300";
+            } else if (totalAkhirJTM >= 24) {
+                badge.className = "mt-1 text-center font-bold text-[10px] px-2 py-1 rounded bg-emerald-600 text-white tracking-wide uppercase shadow-sm";
+                badge.innerText = "LAYAK MET REQUISITE";
+                sideBar.className = "absolute top-0 left-0 w-2 h-full bg-emerald-500";
             } else {
-                const slots = {
-                    1: { start: "07:55", end: "08:30" },
-                    2: { start: "08:30", end: "09:05" },
-                    3: { start: "09:05", end: "09:40" },
-                    4: { start: "09:40", end: "10:15" },
-                    5: { start: "10:50", end: "11:25" },
-                    6: { start: "11:25", end: "12:00" },
-                    7: { start: "12:00", end: "12:35" },
-                    8: { start: "12:35", end: "13:10" }
-                };
-                return slots[period] || { start: "--:--", end: "--:--" };
+                badge.className = "mt-1 text-center font-bold text-[10px] px-2 py-1 rounded bg-rose-600 text-white tracking-wide uppercase shadow-sm";
+                badge.innerText = "TIDAK LAYAK (KURANG)";
+                sideBar.className = "absolute top-0 left-0 w-2 h-full bg-rose-500";
             }
         }
 
-        function buildFullRosterSchedule() {
-            const classSchedule = {}; 
-            const teacherSchedule = {}; 
-
-            classes.forEach(c => {
-                classSchedule[c] = {};
-                days.forEach(d => {
-                    classSchedule[c][d] = {};
-                    const maxP = d === 'Jumat' ? 5 : 8;
-                    for (let p = 1; p <= maxP; p++) {
-                        classSchedule[c][d][p] = null;
-                    }
-                });
-            });
-
-            db.forEach(t => {
-                teacherSchedule[t.name] = {};
-                days.forEach(d => {
-                    teacherSchedule[t.name][d] = {};
-                    const maxP = d === 'Jumat' ? 5 : 8;
-                    for (let p = 1; p <= maxP; p++) {
-                        teacherSchedule[t.name][d][p] = null;
-                    }
-                });
-            });
-
-            let rawLessons = [];
-            db.forEach(t => {
-                if (t.allocations && Array.isArray(t.allocations)) {
-                    t.allocations.forEach(alloc => {
-                        for (let i = 0; i < alloc.hours; i++) {
-                            rawLessons.push({
-                                teacherName: t.name,
-                                className: alloc.className,
-                                subject: alloc.subject
-                            });
-                        }
-                    });
-                }
-            });
-
-            rawLessons.sort((a, b) => {
-                if (a.className !== b.className) return a.className.localeCompare(b.className);
-                return a.subject.localeCompare(b.subject);
-            });
-
-            let unassigned = [];
-
-            rawLessons.forEach(unit => {
-                let scheduled = false;
-
-                for (let dIdx = 0; dIdx < days.length; dIdx++) {
-                    const day = days[dIdx];
-                    const maxP = day === 'Jumat' ? 5 : 8;
-
-                    for (let period = 1; period <= maxP; period++) {
-                        const classFree = classSchedule[unit.className][day][period] === null;
-                        const teacherFree = teacherSchedule[unit.teacherName][day][period] === null;
-
-                        if (classFree && teacherFree) {
-                            classSchedule[unit.className][day][period] = {
-                                teacher: unit.teacherName,
-                                subject: unit.subject
-                            };
-                            teacherSchedule[unit.teacherName][day][period] = {
-                                className: unit.className,
-                                subject: unit.subject
-                            };
-                            scheduled = true;
-                            break;
-                        }
-                    }
-                    if (scheduled) break;
-                }
-
-                if (!scheduled) {
-                    unassigned.push(unit);
-                }
-            });
-
-            return { classSchedule, unassigned };
-        }
-
-        function renderRosterPreview() {
-            const filterClass = document.getElementById('filter-roster-class').value;
-            const previewBody = document.getElementById('roster-preview-body');
-            previewBody.innerHTML = '';
-
-            const { classSchedule } = buildFullRosterSchedule();
-            const classPlan = classSchedule[filterClass];
-
-            if (!classPlan) {
-                previewBody.innerHTML = '<tr><td colspan="8" class="p-8 text-slate-400 italic text-center text-xs">Simpan data guru dengan sebaran jam terlebih dahulu untuk menghasilkan jadwal.</td></tr>';
+        // Menyimpan / Mengunci Data Guru Ke Database Cloud / Lokal Backup
+        window.simpanKeDatabaseCloud = async function() {
+            const nama = document.getElementById('guru-nama').value;
+            if (!nama || nama.trim() === "") {
+                alert("Mohon masukkan nama lengkap guru terlebih dahulu!");
                 return;
             }
 
-            for (let period = 1; period <= 8; period++) {
-                let rowHtml = `<tr class="hover:bg-slate-50 transition-all">`;
-                rowHtml += `<td class="p-3 font-bold bg-slate-50 border border-slate-200 text-slate-700">${period}</td>`;
-                
-                const stdTime = getTimeSlot('Senin', period);
-                rowHtml += `<td class="p-3 border border-slate-200 font-bold text-indigo-600">${stdTime.start} - ${stdTime.end}</td>`;
+            const selectTugas = document.getElementById('guru-tugas');
+            const bobotTugas = parseInt(selectTugas.value) || 0;
+            const namaTugas = selectTugas.options[selectTugas.selectedIndex].text.split('(')[0].trim();
 
-                days.forEach(day => {
-                    if (day === 'Jumat' && period > 5) {
-                        rowHtml += `<td class="p-3 border border-slate-100 bg-slate-100/50 text-slate-400 font-bold italic">-</td>`;
-                    } else {
-                        const slot = classPlan[day][period];
-                        if (slot) {
-                            rowHtml += `
-                                <td class="p-3 border border-slate-200 bg-indigo-50/50 text-[11px] leading-tight">
-                                    <div class="font-extrabold text-indigo-900">${slot.subject}</div>
-                                    <div class="text-slate-500 font-semibold mt-0.5">${slot.teacher}</div>
-                                </td>`;
-                        } else {
-                            rowHtml += `<td class="p-3 border border-slate-200 text-slate-300 italic">- Kosong -</td>`;
-                        }
-                    }
-                });
-
-                rowHtml += `</tr>`;
-
-                if (period === 4) {
-                    let breakHtml = `<tr class="bg-amber-50/40 font-bold text-[10px] text-slate-500 tracking-wider">`;
-                    breakHtml += `<td class="p-2 border border-slate-200">-</td>`;
-                    breakHtml += `<td class="p-2 border border-slate-200">10:15 - 10:50</td>`;
-                    days.forEach(day => {
-                        if (day === 'Jumat') {
-                            breakHtml += `<td class="p-2 border border-slate-200 bg-slate-100 text-slate-400 font-bold italic">-</td>`;
-                        } else {
-                            breakHtml += `<td class="p-2 border border-slate-200 text-amber-800 font-extrabold bg-amber-100/30">ISTIRAHAT</td>`;
-                        }
-                    });
-                    breakHtml += `</tr>`;
-                    previewBody.innerHTML += breakHtml;
+            let matriksData = {};
+            let totalMatriks = 0;
+            const inputs = document.getElementById('matrix-body').getElementsByTagName('input');
+            for (let input of inputs) {
+                const val = parseInt(input.value) || 0;
+                if (val > 0) {
+                    matriksData[input.id] = val;
+                    totalMatriks += val;
                 }
+            }
 
-                previewBody.innerHTML += rowHtml;
+            const totalAkhirJTM = totalMatriks + bobotTugas;
+            const statusKelayakan = totalAkhirJTM >= 24 ? "LAYAK" : "TIDAK LAYAK";
+            const recordId = document.getElementById('edit-id').value || "guru_" + Date.now();
+
+            const paketData = {
+                nama: nama,
+                tugas: bobotTugas.toString(),
+                tugasNama: namaTugas,
+                totalJTM: totalAkhirJTM,
+                status: statusKelayakan,
+                matriks: matriksData
+            };
+
+            if (isFirebaseOnline) {
+                try {
+                    await setDoc(doc(db, "guru_jtm_min11", recordId), paketData);
+                } catch (e) {
+                    console.error("Gagal simpan ke Cloud, mengalihkan ke lokal saja:", e);
+                }
+            }
+
+            // Selaraskan cache lokal
+            const idx = localCacheDatabase.findIndex(g => g.id === recordId);
+            if (idx >= 0) localCacheDatabase[idx] = { id: recordId, ...paketData };
+            else localCacheDatabase.push({ id: recordId, ...paketData });
+
+            localStorage.setItem('backup_jtm_data', JSON.stringify(localCacheDatabase));
+            
+            // Reset form input ke setelan pabrik
+            document.getElementById('edit-id').value = "";
+            document.getElementById('guru-nama').value = "";
+            selectTugas.value = "0";
+            bersihkanFormMatriks();
+            window.batalEdit();
+            
+            await muatDataTerdaftar();
+            alert("Data beban kerja guru berhasil dikunci dan diamankan di pangkalan database!");
+        }
+
+        // Pemicu Membuka Mode Koreksi / Edit Guru dari Database
+        window.pemicuEditGuru = function(id) {
+            const target = localCacheDatabase.find(g => g.id === id);
+            if (!target) return;
+
+            document.getElementById('edit-id').value = target.id;
+            document.getElementById('guru-nama').value = target.nama;
+            document.getElementById('guru-tugas').value = target.tugas;
+
+            bersihkanFormMatriks();
+            if (target.matriks) {
+                for (let cellId in target.matriks) {
+                    const el = document.getElementById(cellId);
+                    if (el) el.value = target.matriks[cellId];
+                }
+            }
+
+            document.getElementById('btn-save-main').innerHTML = `<i class="fa-solid fa-user-check"></i> Simpan Perubahan Guru`;
+            document.getElementById('btn-cancel-edit').classList.replace('hidden', 'flex');
+            
+            switchTab('input-section');
+            hitungOtomatis();
+        }
+
+        window.batalEdit = function() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('guru-nama').value = "";
+            document.getElementById('guru-tugas').value = "0";
+            bersihkanFormMatriks();
+            document.getElementById('btn-save-main').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Data & Kunci Form`;
+            document.getElementById('btn-cancel-edit').classList.replace('flex', 'hidden');
+            hitungOtomatis();
+        }
+
+        // Menghapus Data Guru Tertentu
+        window.hapusGuruDariCloud = async function(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus catatan beban kerja guru ini dari pangkalan data?")) return;
+
+            if (isFirebaseOnline) {
+                try {
+                    await deleteDoc(doc(db, "guru_jtm_min11", id));
+                } catch (e) { console.error(e); }
+            }
+
+            localCacheDatabase = localCacheDatabase.filter(g => g.id !== id);
+            localStorage.setItem('backup_jtm_data', JSON.stringify(localCacheDatabase));
+            bangunTabelDatabase();
+        }
+
+        // Mengosongkan Seluruh Riwayat Database Cloud & Lokal
+        window.bersihkanSeluruhDatabase = async function() {
+            if (!confirm("PERINGATAN! Tindakan ini akan menghapus semua data guru yang telah disimpan secara permanen di server cloud. Lanjutkan?")) return;
+
+            if (isFirebaseOnline) {
+                try {
+                    for (let g of localCacheDatabase) {
+                        await deleteDoc(doc(db, "guru_jtm_min11", g.id));
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            localCacheDatabase = [];
+            localStorage.setItem('backup_jtm_data', JSON.stringify([]));
+            bangunTabelDatabase();
+        }
+
+        // Bersihkan Nilai Angka di Matriks Isian
+        window.bersihkanFormMatriks = function() {
+            const inputs = document.getElementById('matrix-body').getElementsByTagName('input');
+            for (let input of inputs) { input.value = ""; }
+            hitungOtomatis();
+        }
+
+        // Penanganan Perpindahan Menu Tab
+        window.switchTab = function(tabName) {
+            const tabInput = document.getElementById('tab-input-section');
+            const tabDB = document.getElementById('tab-database-section');
+            const btnInput = document.getElementById('btn-tab-input');
+            const btnDB = document.getElementById('btn-tab-database');
+
+            if (tabName === 'input-section') {
+                tabInput.classList.replace('hidden', 'block');
+                tabDB.classList.replace('block', 'hidden');
+                btnInput.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-emerald-700 bg-emerald-50 transition-all flex items-center justify-center gap-2";
+                btnDB.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center justify-center gap-2";
+            } else {
+                tabInput.classList.replace('block', 'hidden');
+                tabDB.classList.replace('hidden', 'block');
+                btnDB.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-emerald-700 bg-emerald-50 transition-all flex items-center justify-center gap-2";
+                btnInput.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center justify-center gap-2";
             }
         }
 
-        function generateRosterAndDownload() {
-            if (db.length === 0) {
-                return triggerModal('Tidak Ada Data', 'Silakan masukkan minimal 1 data guru untuk menyusun dan mendownload roster.');
+        // ==================== ALGORITMA PENYUSUN ROSTER & EKSPOR EMIS ====================
+        window.unduhRosterGoogleSheet = function() {
+            if (localCacheDatabase.length === 0) {
+                alert("Database kosong! Mohon isi dan simpan minimal 1 data guru untuk menyusun Roster EMIS.");
+                return;
             }
 
-            const { classSchedule, unassigned } = buildFullRosterSchedule();
+            const hariList = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            
+            // Generate Struktur Waktu Mengajar Berdurasi 35 Menit dari Jam 07:55
+            let slotWaktu = [];
+            let jamMulai = new Date();
+            jamMulai.setHours(7, 55, 0, 0);
 
-            let csvRows = [];
-            csvRows.push(["Hari", "Jam Ke", "Waktu Mulai", "Waktu Selesai", "Kelas", "Mata Pelajaran", "Nama Guru"]);
+            for (let i = 1; i <= 8; i++) {
+                let jMulaiStr = `${String(jamMulai.getHours()).padStart(2, '0')}:${String(jamMulai.getMinutes()).padStart(2, '0')}`;
+                
+                // Masukkan pembatas waktu Istirahat jika masuk slot jam 10:15
+                if (jamMulai.getHours() === 10 && jamMulai.getMinutes() === 15) {
+                    slotWaktu.push({ type: "ISTIRAHAT", label: "10:15 - 10:50" });
+                    jamMulai.setHours(10, 50, 0, 0); // Maju ke selesai istirahat
+                    jMulaiStr = "10:50";
+                }
 
-            classes.forEach(c => {
-                days.forEach(day => {
-                    const maxP = day === 'Jumat' ? 5 : 8;
-                    for (let p = 1; p <= maxP; p++) {
-                        const slot = classSchedule[c][day][p];
-                        if (slot) {
-                            const time = getTimeSlot(day, p);
-                            csvRows.push([
-                                day,
-                                p,
-                                time.start,
-                                time.end,
-                                `Kelas ${c}`,
-                                slot.subject,
-                                slot.teacher
-                            ]);
+                let jamSelesai = new Date(jamMulai.getTime() + 35 * 60000);
+                let jSelesaiStr = `${String(jamSelesai.getHours()).padStart(2, '0')}:${String(jamSelesai.getMinutes()).padStart(2, '0')}`;
+                
+                slotWaktu.push({ type: "PELAJARAN", jamKe: i, label: `${jMulaiStr} - ${jSelesaiStr}` });
+                jamMulai = jamSelesai;
+            }
+
+            // Bangun Ekstraksi Flat Kebutuhan Guru Mengajar (Greedy-Queue)
+            let antreanMengajar = [];
+            localCacheDatabase.forEach(guru => {
+                if (guru.matriks) {
+                    for (let key in guru.matriks) {
+                        const parts = key.split('_');
+                        const mIdx = parseInt(parts[1]);
+                        const rombel = parts[2];
+                        const totalJam = guru.matriks[key];
+                        const namaMapel = mapels[mIdx];
+
+                        for (let h = 0; h < totalJam; h++) {
+                            antreanMengajar.push({ guru: guru.nama, mapel: namaMapel, rombel: rombel });
                         }
+                    }
+                }
+            });
+
+            // Mesin Penjadwal Bebas Bentrok (Anti-Clash Scheduler Matrix)
+            let jadwalRoster = {};
+            hariList.forEach(h => {
+                jadwalRoster[h] = {};
+                slotWaktu.forEach((slot, sIdx) => {
+                    jadwalRoster[h][sIdx] = {}; // Kunci: rombel -> {guru, mapel}
+                });
+            });
+
+            // Memasukkan Tugas Berdasarkan Prioritas Distribusi tanpa Tabrakan Jam
+            antreanMengajar.forEach(tugas => {
+                let berhasilTerjadwal = false;
+
+                for (let hIdx = 0; hIdx < hariList.length && !berhasilTerjadwal; hIdx++) {
+                    const hari = hariList[hIdx];
+                    for (let sIdx = 0; sIdx < slotWaktu.length && !berhasilTerjadwal; sIdx++) {
+                        if (slotWaktu[sIdx].type === "ISTIRAHAT") continue;
+
+                        // Validasi Bentrok: Guru tidak boleh mengajar di tempat lain di jam yang sama,
+                        // Rombel tidak boleh diisi guru lain di jam yang sama.
+                        const guruBentrok = Object.values(jadwalRoster[hari][sIdx]).some(v => v.guru === tugas.guru);
+                        const rombelTerisi = jadwalRoster[hari][sIdx][tugas.rombel] !== undefined;
+
+                        if (!guruBentrok && !rombelTerisi) {
+                            jadwalRoster[hari][sIdx][tugas.rombel] = { guru: tugas.guru, mapel: tugas.mapel };
+                            berhasilTerjadwal = true;
+                        }
+                    }
+                }
+            });
+
+            // Konversi Hasil Matriks Menjadi File CSV Siap Upload Ke Google Sheets / Excel
+            let barisCSV = [];
+            barisCSV.push("ROSTER SIAP UPLOAD EMIS GTK - MIN 11 ACEH BARAT");
+            barisCSV.push("Kreator Sistem: Amirah Mastura (AI Website Creator)");
+            barisCSV.push("");
+            barisCSV.push("Hari,Jam KBM,Rombongan Belajar,Mata Pelajaran,Nama Guru Pengajar");
+
+            hariList.forEach(hari => {
+                slotWaktu.forEach((slot, sIdx) => {
+                    if (slot.type === "ISTIRAHAT") {
+                        barisCSV.push(`${hari},${slot.label},SEMUA ROMBEL,--- ISTIRAHAT MADRASAH ---,---`);
+                    } else {
+                        rombelList.forEach(rombel => {
+                            const isiSlot = jadwalRoster[hari][sIdx][rombel];
+                            if (isiSlot) {
+                                barisCSV.push(`${hari},${slot.label} (Jam ke-${slot.jamKe}),Kelas ${rombel},${isiSlot.mapel},${isiSlot.guru}`);
+                            } else {
+                                barisCSV.push(`${hari},${slot.label} (Jam ke-${slot.jamKe}),Kelas ${rombel},Kosong,-`);
+                            }
+                        });
                     }
                 });
             });
 
-            let csvContent = "";
-            csvRows.forEach(rowArray => {
-                const row = rowArray.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
-                csvContent += row + "\r\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const stringCSV = barisCSV.join("\n");
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), stringCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Roster_EMIS_MIN11_AcehBarat_${new Date().getFullYear()}.csv`);
-            link.style.visibility = 'hidden';
+            
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `Roster_EMIS_MIN11_AcehBarat_${Date.now()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-
-            if (unassigned.length > 0) {
-                triggerModal(
-                    'Berhasil dengan Catatan', 
-                    `Roster EMIS berhasil disusun dan diunduh. Namun terdapat ${unassigned.length} jam pelajaran yang tidak muat dalam rentang hari mingguan karena bentrok berlebih. Tinjau alokasi JTM guru kembali.`
-                );
-            } else {
-                triggerToast('File Roster EMIS siap pakai berhasil diunduh!');
-            }
         }
 
-        // Global scope integration mapping for HTML Event handlers
-        window.showSection = showSection;
-        window.calculateNow = calculateNow;
-        window.saveData = saveData;
-        window.editEntry = editEntry;
-        window.confirmDelete = confirmDelete;
-        window.confirmClearAll = confirmClearAll;
-        window.resetCalculator = resetCalculator;
-        window.renderRosterPreview = renderRosterPreview;
-        window.generateRosterAndDownload = generateRosterAndDownload;
-
-        // Entry orchestration on screen load
+        // Eksekusi fungsi inisialisasi aplikasi saat halaman selesai dimuat browser
         window.onload = function() {
             initApp();
-            setupFirebase();
-        }
+        };
+
     </script>
 </body>
 </html>
