@@ -325,7 +325,7 @@
         // Retrieve global configs from environment or fallback
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'min-11-jtm-app';
         currentAppId = appId;
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" }; = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // Custom Dialog Box & Toast
@@ -396,13 +396,13 @@
 
             // Fallback load from localStorage in case Cloud configuration is missing
             const localBackup = localStorage.getItem('jtm_db_pro');
-            if (localBackup && !firebaseConfig) {
+            if (localBackup && !const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
                 db = JSON.parse(localBackup);
                 renderDashboard();
                 renderTable();
                 renderRosterPreview();
                 updateSyncBadge("Offline (Lokal)", "bg-slate-400", false);
-            } else if (!firebaseConfig) {
+            } else if (!const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
                 updateSyncBadge("Offline (Lokal)", "bg-slate-400", false);
                 renderTable();
                 renderDashboard();
@@ -428,13 +428,13 @@
 
         // Setup real-time listeners and database authentication
         async function setupFirebase() {
-            if (!firebaseConfig) {
+            if (!const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
                 console.log("Firebase config not found. Running in offline fallback mode.");
                 return;
             }
 
             try {
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };);
                 const auth = getAuth(app);
                 firestoreDb = getFirestore(app);
 
