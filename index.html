@@ -9,7 +9,7 @@
     <!-- Chart.js for beautiful visual report -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .chart-container { position: relative; width: 100%; max-width: 600px; margin: auto; height: 300px; }
         .nav-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
@@ -24,7 +24,11 @@
 </head>
 <body class="text-slate-800">
 
-    <!-- -->
+    <!-- Navigation & Setup Warnings -->
+    <div id="sandbox-warning" class="hidden bg-amber-500 text-white px-4 py-2 text-center text-xs font-bold transition-all">
+        ⚠️ Aplikasi dijalankan di dalam pembatasan keamanan Google Sites (Sandbox). Silakan gunakan metode "Sematkan berdasarkan URL" menggunakan link GitHub Pages Anda agar fitur online berfungsi lancar.
+    </div>
+
     <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between h-auto md:h-16 items-center py-3 md:py-0 gap-3 md:gap-0">
             <div class="flex items-center gap-2">
@@ -56,7 +60,6 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8">
 
-        <!-- -->
         <!-- SECTION: DASHBOARD -->
         <section id="sec-dash" class="space-y-6 fade-in">
             <div class="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
@@ -93,7 +96,6 @@
             </div>
         </section>
 
-        <!-- -->
         <!-- SECTION: CALCULATOR -->
         <section id="sec-calc" class="hidden space-y-6 fade-in">
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -179,7 +181,6 @@
             <div class="h-32"></div> <!-- Space for bottom sticky bar -->
         </section>
 
-        <!-- -->
         <!-- SECTION: DATA LIST & ROSTER -->
         <section id="sec-list" class="hidden space-y-8 fade-in">
             <div class="space-y-4">
@@ -210,7 +211,6 @@
                                 </tr>
                             </thead>
                             <tbody id="db-body" class="divide-y divide-slate-150">
-                                <!-- Loaded dynamically via Firestore or Local Backup -->
                                 <tr><td colspan="5" class="p-10 text-center text-slate-400 italic text-sm">Sedang memuat data dari awan...</td></tr>
                             </tbody>
                         </table>
@@ -267,7 +267,6 @@
 
     </main>
 
-    <!-- -->
     <!-- CUSTOM ALERT / MODAL SYSTEM (No Native Alert/Confirm used) -->
     <div id="modal-container" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[100] flex items-center justify-center hidden fade-in">
         <div class="bg-white max-w-md w-full p-6 rounded-2xl shadow-2xl m-4 border border-slate-200 transform scale-100 transition-all">
@@ -296,14 +295,24 @@
         </div>
     </footer>
 
-    <!-- -->
     <!-- FIREBASE AND CORE APP SCRIPT MODULE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Constants and State Variables
+        // =========================================================================
+        // PENTING: Ganti baris di bawah ini dengan menyalin "firebaseConfig" asli Anda
+        // dari Firebase Console agar sistem sinkronisasi online menyala.
+        // =========================================================================
+        const firebaseConfig = {
+  apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",
+  authDomain: "jtm-min11-acehbarat.firebaseapp.com",
+  projectId: "jtm-min11-acehbarat",
+  storageBucket: "jtm-min11-acehbarat.firebasestorage.app",
+  messagingSenderId: "352580004728",
+  appId: "1:352580004728:web:85943d861f967c3454768d"
+};
         const subjects = [
             "Qur'an Hadits", "Aqidah Akhlak", "Fiqih", "SKI", "B. Arab", 
             "Pend. Pancasila", "B. Indonesia", "Matematika", "IPAS", "SBdP", 
@@ -320,13 +329,7 @@
         let editingId = null; 
         let userId = null;
         let firestoreDb = null;
-        let currentAppId = 'default-app-id';
-
-        // Retrieve global configs from environment or fallback
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'min-11-jtm-app';
-        currentAppId = appId;
-        const const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" }; = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        let currentAppId = 'min-11-jtm-app';
 
         // Custom Dialog Box & Toast
         function triggerToast(message) {
@@ -366,8 +369,17 @@
             modal.classList.remove('hidden');
         }
 
-        //        // Initialize App & Matrix Setup
+        // Initialize App & Matrix Setup
         function initApp() {
+            // Check if running in restricted IFrame environment
+            try {
+                if (window.self !== window.top) {
+                    document.getElementById('sandbox-warning').classList.remove('hidden');
+                }
+            } catch (e) {
+                document.getElementById('sandbox-warning').classList.remove('hidden');
+            }
+
             const tbody = document.getElementById('matrix-body');
             tbody.innerHTML = '';
             
@@ -395,14 +407,21 @@
             });
 
             // Fallback load from localStorage in case Cloud configuration is missing
-            const localBackup = localStorage.getItem('jtm_db_pro');
-            if (localBackup && !const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
+            let localBackup = null;
+            try {
+                localBackup = localStorage.getItem('jtm_db_pro');
+            } catch (e) {
+                console.warn("Storage access restricted. Sandbox detected.");
+            }
+
+            if (localBackup) {
                 db = JSON.parse(localBackup);
                 renderDashboard();
                 renderTable();
                 renderRosterPreview();
-                updateSyncBadge("Offline (Lokal)", "bg-slate-400", false);
-            } else if (!const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
+            }
+
+            if (!isFirebaseConfigured) {
                 updateSyncBadge("Offline (Lokal)", "bg-slate-400", false);
                 renderTable();
                 renderDashboard();
@@ -428,22 +447,17 @@
 
         // Setup real-time listeners and database authentication
         async function setupFirebase() {
-            if (!const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };) {
-                console.log("Firebase config not found. Running in offline fallback mode.");
+            if (!isFirebaseConfigured) {
+                console.log("Firebase config not found or unconfigured. Running in offline fallback mode.");
                 return;
             }
 
             try {
-                const app = initializeApp(const firebaseConfig = {   apiKey: "AIzaSyDVIYgH1DbpKc9X9H0oNn8UkjIeE8Y0bo0",   authDomain: "jtm-min11-acehbarat.firebaseapp.com",   projectId: "jtm-min11-acehbarat",   storageBucket: "jtm-min11-acehbarat.firebasestorage.app",   messagingSenderId: "352580004728",   appId: "1:352580004728:web:85943d861f967c3454768d" };);
+                const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 firestoreDb = getFirestore(app);
 
-                // Authentication step as per MANDATORY Rule 3
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
@@ -461,17 +475,15 @@
 
             } catch (err) {
                 console.error("Firebase Initialization Error:", err);
-                updateSyncBadge("Awan Bermasalah (Lokal)", "bg-rose-500", false);
+                updateSyncBadge("Sandbox Terbatas (Lokal)", "bg-rose-500", false);
             }
         }
 
         function startRealtimeSync() {
             if (!firestoreDb) return;
 
-            // Strict collection path adhering to Rule 1
             const collectionRef = collection(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers');
 
-            // Listening real-time with error callback as per mandatory instructions
             onSnapshot(collectionRef, (snapshot) => {
                 const tempTeachers = [];
                 snapshot.forEach((doc) => {
@@ -481,13 +493,12 @@
                     });
                 });
 
-                // Update local memory state (ensuring zero input lag)
                 db = tempTeachers;
                 
-                // Keep local storage as a quick offline backup
-                localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                try {
+                    localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                } catch(e) {}
 
-                // Re-render components with latest real-time synced data
                 renderTable();
                 renderDashboard();
                 renderRosterPreview();
@@ -499,7 +510,7 @@
             });
         }
 
-        //        // Local Calculations (Client-side logic is instantaneous, guaranteeing "no lag")
+        // Local Calculations
         function calculateNow() {
             const taskJtm = parseInt(document.getElementById('inp-task').value) || 0;
             let teachingJtm = 0;
@@ -562,7 +573,6 @@
                 updatedAt: new Date().toISOString()
             };
 
-            // If Firebase Cloud is active, save directly to cloud
             if (firestoreDb) {
                 try {
                     updateSyncBadge("Menyimpan ke Awan...", "bg-amber-500", true);
@@ -574,7 +584,6 @@
                     triggerModal("Kesalahan Penyimpanan", "Gagal mengunggah data ke awan. Disimpan secara lokal sementara.");
                 }
             } else {
-                // Offline fallback
                 if (editingId) {
                     const idx = db.findIndex(item => item.id === editingId);
                     if (idx !== -1) {
@@ -585,13 +594,14 @@
                     db.push({ id: docId, ...payload });
                     triggerToast('Data ditambahkan secara lokal!');
                 }
-                localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                try {
+                    localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                } catch (e) {}
                 renderTable();
                 renderDashboard();
                 renderRosterPreview();
             }
 
-            // Reset States
             editingId = null;
             document.getElementById('calc-title').innerText = "Input Distribusi JTM Guru";
             document.getElementById('edit-badge').classList.add('hidden');
@@ -601,7 +611,6 @@
             showSection('list');
         }
 
-        // Load entry to form for editing
         function editEntry(id) {
             const teacher = db.find(item => String(item.id) === String(id));
             if (!teacher) return;
@@ -614,12 +623,10 @@
             document.getElementById('inp-name').value = teacher.name;
             document.getElementById('inp-task').value = teacher.taskVal || "0";
 
-            // Reset all matrix boxes
             document.querySelectorAll('.jtm-val').forEach(input => {
                 input.value = 0;
             });
 
-            // Set matrix boxes with matched JTM allocations
             if (teacher.allocations && Array.isArray(teacher.allocations)) {
                 teacher.allocations.forEach(alloc => {
                     const sIdx = subjects.indexOf(alloc.subject);
@@ -636,7 +643,6 @@
             triggerToast('Data berhasil dimuat ke Kalkulator.');
         }
 
-        // Delete specific entry from Cloud or Local
         async function confirmDelete(id) {
             triggerModal(
                 'Hapus Data', 
@@ -654,7 +660,9 @@
                         }
                     } else {
                         db = db.filter(item => String(item.id) !== String(id));
-                        localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                        try {
+                            localStorage.setItem('jtm_db_pro', JSON.stringify(db));
+                        } catch(e) {}
                         renderTable();
                         renderDashboard();
                         renderRosterPreview();
@@ -665,7 +673,6 @@
             );
         }
 
-        // Clear entire DB (Safe bulk delete for collaboration)
         function confirmClearAll() {
             triggerModal(
                 'Kosongkan Seluruh Database', 
@@ -674,8 +681,6 @@
                     if (firestoreDb) {
                         try {
                             updateSyncBadge("Mengosongkan...", "bg-amber-500", true);
-                            
-                            // Retrieve and delete documents one by one as per simple client instructions
                             const collectionRef = collection(firestoreDb, 'artifacts', currentAppId, 'public', 'data', 'teachers');
                             const snap = await getDocs(collectionRef);
                             const deletePromises = [];
@@ -690,7 +695,9 @@
                         }
                     } else {
                         db = [];
-                        localStorage.removeItem('jtm_db_pro');
+                        try {
+                            localStorage.removeItem('jtm_db_pro');
+                        } catch (e) {}
                         renderTable();
                         renderDashboard();
                         renderRosterPreview();
@@ -701,7 +708,6 @@
             );
         }
 
-        // Render visual charts and database listings
         function renderTable() {
             const container = document.getElementById('db-body');
             container.innerHTML = db.length === 0 ? '<tr><td colspan="5" class="p-10 text-center text-slate-400 italic text-sm">Belum ada data verifikasi guru di sistem awan ini.</td></tr>' : '';
@@ -783,17 +789,13 @@
             if(id === 'dash') renderDashboard();
         }
 
-        //        // Scheduling and Clashing Prevention (Anti-Clash Scheduler engine)
         const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
         function getTimeSlot(day, period) {
-            // Monday to Saturday parameters
-            // 35 minutes per slot, starts at 07:55.
             if (day === 'Jumat') {
                 const slots = {
                     1: { start: "07:55", end: "08:30" },
                     2: { start: "08:30", end: "09:05" },
-                    // Break: Imtaq (09:05 - 09:35)
                     3: { start: "09:35", end: "10:10" },
                     4: { start: "10:10", end: "10:45" },
                     5: { start: "10:45", end: "11:20" }
@@ -805,7 +807,6 @@
                     2: { start: "08:30", end: "09:05" },
                     3: { start: "09:05", end: "09:40" },
                     4: { start: "09:40", end: "10:15" },
-                    // Break: 10:15 - 10:50
                     5: { start: "10:50", end: "11:25" },
                     6: { start: "11:25", end: "12:00" },
                     7: { start: "12:00", end: "12:35" },
@@ -819,7 +820,6 @@
             const classSchedule = {}; 
             const teacherSchedule = {}; 
 
-            // Initialize structural schemas
             classes.forEach(c => {
                 classSchedule[c] = {};
                 days.forEach(d => {
@@ -842,7 +842,6 @@
                 });
             });
 
-            // Gather elements of lessons
             let rawLessons = [];
             db.forEach(t => {
                 if (t.allocations && Array.isArray(t.allocations)) {
@@ -858,7 +857,6 @@
                 }
             });
 
-            // Sort to ensure better balanced distribution
             rawLessons.sort((a, b) => {
                 if (a.className !== b.className) return a.className.localeCompare(b.className);
                 return a.subject.localeCompare(b.subject);
@@ -866,7 +864,6 @@
 
             let unassigned = [];
 
-            // Anti-clash greedy dispatcher
             rawLessons.forEach(unit => {
                 let scheduled = false;
 
@@ -941,7 +938,6 @@
 
                 rowHtml += `</tr>`;
 
-                // Render Rest rows
                 if (period === 4) {
                     let breakHtml = `<tr class="bg-amber-50/40 font-bold text-[10px] text-slate-500 tracking-wider">`;
                     breakHtml += `<td class="p-2 border border-slate-200">-</td>`;
@@ -961,7 +957,6 @@
             }
         }
 
-        //        // Google Sheet CSV Export Routine
         function generateRosterAndDownload() {
             if (db.length === 0) {
                 return triggerModal('Tidak Ada Data', 'Silakan masukkan minimal 1 data guru untuk menyusun dan mendownload roster.');
@@ -999,7 +994,6 @@
                 csvContent += row + "\r\n";
             });
 
-            // Browser Clipboard and trigger file download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -1020,7 +1014,7 @@
             }
         }
 
-        //        // Global scope integration mapping for HTML Event handlers
+        // Global scope integration mapping for HTML Event handlers
         window.showSection = showSection;
         window.calculateNow = calculateNow;
         window.saveData = saveData;
