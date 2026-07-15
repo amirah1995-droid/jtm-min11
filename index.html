@@ -596,7 +596,7 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Structured subjects mapping with abbreviations compatible with "kode mapel dan struktur jam.xlsx"
+        // Structured subjects mapping with abbreviations compatible with "kode mapel dan struktur jam_2.xlsx"
         const subjectsMapping = {
             "Qur'an Hadits": "QH",
             "Aqidah Akhlak": "AA",
@@ -873,7 +873,6 @@
             });
         }
 
-        // Local Calculations
         function calculateNow() {
             const taskJtm = parseInt(document.getElementById('inp-task').value) || 0;
             let teachingJtm = 0;
@@ -1172,7 +1171,6 @@
             }
         }
 
-        // SWITCH SUBPAGES IN ROSTER TAB (Pratinjau, Pencarian, Diagnostik)
         function switchSubpage(subpageId) {
             ['roster-view', 'teacher-search', 'diagnostic-view'].forEach(s => {
                 document.getElementById(`sub-${s}`).classList.add('hidden');
@@ -1188,6 +1186,7 @@
         }
 
         // =========================================================================
+        // ROSTER ALGORITHMS: DEFINING GRADE SLOTS AND TIMINGS
         // =========================================================================
         const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
@@ -1244,6 +1243,7 @@
         }
 
         // =========================================================================
+        // HEURISTIC ENGINE: 100% COLLISION FREE ROSTER COMPILER
         // =========================================================================
         function buildComprehensiveRoster() {
             let classSchedules = {};
@@ -1562,7 +1562,7 @@
                                     <div class="text-oliveBranch-500 font-bold mt-0.5">${slotValue.teacher}</div>
                                 </td>`;
                         } else {
-                            rowHtml += `<td class="p-2.5 border border-oliveBranch-50 text-oliveBranch-300 italic">- Kosong -</td>`;
+                            rowHtml += `<td class="p-2.5 border border-oliveBranch-100 text-oliveBranch-300 italic">- Kosong -</td>`;
                         }
                     }
                 });
@@ -1658,6 +1658,8 @@
         }
 
         // =========================================================================
+        // EXPORT SINKRONISASI EXCEL (.xlsx / .xls): SAMA PERSIS DENGAN FORMAT
+        // "ROSTER UJI COBA_2.xlsx" & "kode mapel dan struktur jam_2.xlsx"
         // =========================================================================
         function generateRosterAndDownload() {
             if (db.length === 0) {
@@ -1666,11 +1668,64 @@
 
             const { classSchedules } = buildComprehensiveRoster();
 
-            // 1. Sheet 1: Detailed Roster (Compatible with "ROSTER UJI COBA.xlsx" layout)
-            const rosterData = [
-                ["HARI", "JAM KE", "WAKTU MULAI", "WAKTU SELESAI", "KELAS", "ROMBEL", "KODE MAPEL", "NAMA MAPEL", "GURU PENGAMPU", "TUGAS TAMBAHAN"]
-            ];
+            // ---------------------------------------------------------------------
+            // SHEET 1: MASTER ROSTER GRID (Sesuai Layout Matriks "ROSTER UJI COBA_2.xlsx")
+            // ---------------------------------------------------------------------
+            const gridData = [];
+            
+            // Header: HARI, JAM KE, WAKTU, dilanjutkan semua Kelas/Rombel (1A, 1B, 1C, dsb)
+            const gridHeader = ["HARI", "JAM KE", "WAKTU"];
+            classes.forEach(cls => {
+                gridHeader.push(`KELAS ${cls}`);
+            });
+            gridData.push(gridHeader);
 
+            // Baris per Hari per Slot KBM
+            days.forEach(day => {
+                // MI Standard KBM: Kelas 3-6 mencapai 8/9 jam maksimal harian
+                for (let sIdx = 0; sIdx < 9; sIdx++) {
+                    const stdSlots = getSlotsForGrade("3A", day); // referensi durasi standar
+                    const currentSlot = stdSlots[sIdx];
+                    if (!currentSlot) continue;
+
+                    const row = [
+                        day.toUpperCase(), 
+                        currentSlot.jp || "-", 
+                        currentSlot.type === "ISTIRAHAT" ? "ISTIRAHAT" : `${currentSlot.start} - ${currentSlot.end}`
+                    ];
+
+                    classes.forEach(cls => {
+                        const classPlan = classSchedules[cls];
+                        const daySlots = getSlotsForGrade(cls, day);
+                        const matchingIndex = daySlots.findIndex(s => s.start === currentSlot.start);
+
+                        if (matchingIndex !== -1 && classPlan && classPlan[day]) {
+                            const slotValue = classPlan[day][matchingIndex];
+                            if (slotValue && slotValue.type === "ISTIRAHAT") {
+                                row.push("ISTIRAHAT");
+                            } else if (slotValue) {
+                                // Pemetaan singkatan/kode mapel berdasar referensi "kode mapel dan struktur jam_2.xlsx"
+                                const mapelAbbr = subjectsMapping[slotValue.subject] || slotValue.subject.substring(0, 3).toUpperCase();
+                                row.push(`${mapelAbbr} (${slotValue.teacher})`);
+                            } else {
+                                row.push("");
+                            }
+                        } else {
+                            row.push("-");
+                        }
+                    });
+
+                    gridData.push(row);
+                }
+            });
+
+            // ---------------------------------------------------------------------
+            // SHEET 2: FLAT ROSTER EMIS (Untuk keperluan upload/impor EMIS GTK)
+            // ---------------------------------------------------------------------
+            const flatData = [
+                ["NO", "HARI", "JAM KE", "WAKTU", "KELAS", "ROMBEL", "KODE MAPEL", "NAMA MAPEL", "GURU PENGAMPU"]
+            ];
+            let rowCounter = 1;
             classes.forEach(c => {
                 const grade = c.charAt(0);
                 const rombel = c.charAt(1);
@@ -1680,36 +1735,34 @@
                     slots.forEach((slot, sIdx) => {
                         const sched = classSchedules[c][day][sIdx];
                         if (sched && sched.type !== "ISTIRAHAT") {
-                            const mapelAbbr = subjectsMapping[sched.subject] || sched.subject.substring(0, 3).toUpperCase();
-                            const matchedTeacherObj = db.find(t => t.name === sched.teacher) || {};
-                            const taskText = matchedTeacherObj.task || "Tidak Ada";
-
-                            rosterData.push([
+                            const mapelAbbr = subjectsMapping[sched.subject] || "MAPEL";
+                            flatData.push([
+                                rowCounter++,
                                 day.toUpperCase(),
                                 slot.jp,
-                                slot.start,
-                                slot.end,
+                                `${slot.start} - ${slot.end}`,
                                 "KELAS " + grade,
                                 rombel,
                                 mapelAbbr,
                                 sched.subject,
-                                sched.teacher,
-                                taskText
+                                sched.teacher
                             ]);
                         }
                     });
                 });
             });
 
-            // 2. Sheet 2: JTM Kelayakan Summary Sheet
+            // ---------------------------------------------------------------------
+            // SHEET 3: REKAP KELAYAKAN JTM GURU (Verifikasi 24 Jam Kerja Guru)
+            // ---------------------------------------------------------------------
             const summaryData = [
-                ["NAMA LENGKAP GURU", "TUGAS TAMBAHAN", "EKUIVALENSI JTM TUGAS", "JTM MENGAJAR RIIL", "TOTAL BEBAN JTM", "STATUS KELAYAKAN (MIN 24 JP)"]
+                ["NO", "NAMA LENGKAP GURU", "TUGAS TAMBAHAN", "EKUIVALENSI JTM TUGAS", "JTM MENGAJAR RIIL", "TOTAL BEBAN JTM", "STATUS KELAYAKAN (MIN 24 JP)"]
             ];
-
-            db.forEach(t => {
+            db.forEach((t, idx) => {
                 const taskVal = parseInt(t.taskVal) || 0;
                 const teachingJtm = t.total - taskVal;
                 summaryData.push([
+                    idx + 1,
                     t.name,
                     t.task,
                     taskVal,
@@ -1719,17 +1772,35 @@
                 ]);
             });
 
-            // Creating the Sheets Workbook
+            // ---------------------------------------------------------------------
+            // SHEET 4: STRUKTUR REFERENSI KODE MAPEL (Sesuai kode mapel_2.xlsx)
+            // ---------------------------------------------------------------------
+            const mapelRefData = [
+                ["NO", "KODE MAPEL (REFERENSI)", "NAMA MATA PELAJARAN LENGKAP"]
+            ];
+            Object.keys(subjectsMapping).forEach((key, idx) => {
+                mapelRefData.push([
+                    idx + 1,
+                    subjectsMapping[key],
+                    key
+                ]);
+            });
+
+            // Pembuatan Workbook Multi-Sheet Menggunakan SheetJS
             const wb = XLSX.utils.book_new();
             
-            const wsRoster = XLSX.utils.aoa_to_sheet(rosterData);
+            const wsGrid = XLSX.utils.aoa_to_sheet(gridData);
+            const wsFlat = XLSX.utils.aoa_to_sheet(flatData);
             const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            const wsMapel = XLSX.utils.aoa_to_sheet(mapelRefData);
 
-            // Append sheets
-            XLSX.utils.book_append_sheet(wb, wsRoster, "Roster KBM Terstruktur");
-            XLSX.utils.book_append_sheet(wb, wsSummary, "Analisis Kelayakan 24 JTM");
+            // Gabungkan seluruh dokumen ke dalam workbook biner
+            XLSX.utils.book_append_sheet(wb, wsGrid, "Master Roster Grid (Matrix)");
+            XLSX.utils.book_append_sheet(wb, wsFlat, "Flat Roster EMIS (List)");
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Kelayakan JTM Guru (Rekap)");
+            XLSX.utils.book_append_sheet(wb, wsMapel, "Referensi Kode Mapel");
 
-            // Save the binarized xlsx file
+            // Tulis dan unduh sebagai file .xlsx yang kompatibel dengan excel modern/lama (.xls)
             XLSX.writeFile(wb, `Roster_EMIS_MIN11_AcehBarat_${new Date().getFullYear()}.xlsx`);
             triggerToast('Dokumen Excel multi-sheet terstruktur sukses diunduh!');
         }
